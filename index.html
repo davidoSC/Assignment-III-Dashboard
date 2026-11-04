@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AstraSync Contract Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f5f1; --panel:#ffffff; --ink:#1d2330; --muted:#5d6472; --line:#e3e1da;
+    --a:#4c78a8; --b:#d9962b; --c:#c0392b; --accent:#c0392b; --soft:#fbefe9;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,sans-serif}
+  header{background:#1d2330;color:#fff;padding:40px 16px 32px}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+  header h1{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(28px,4vw,40px);margin:0 0 6px}
+  header p{margin:0;color:#c9cdd6}
+  nav{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+  nav a{color:var(--ink);text-decoration:none;font-size:14px;font-weight:500;padding:6px 12px;border-radius:999px;white-space:nowrap}
+  nav a:hover{background:var(--bg)}
+  section{padding:40px 0 8px}
+  h2{font-family:"Source Serif 4",Georgia,serif;font-size:28px;margin:0 0 4px}
+  h2 .num{color:var(--accent);margin-right:8px}
+  .lede{color:var(--muted);margin:0 0 20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .summary{border-left:5px solid var(--accent);font-size:17px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .kpi .lab{font-size:13px;color:var(--muted)}
+  .kpi .val{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+  .kpi.win{border:2px solid var(--c);background:var(--soft)}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .opt h3{margin:0 0 2px;font-size:18px}
+  .opt .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;color:#fff;margin-bottom:8px}
+  .opt .ev{font-size:28px;font-weight:700;margin:8px 0 4px;font-variant-numeric:tabular-nums}
+  .opt ul{padding-left:18px;margin:8px 0 0;font-size:14.5px}
+  .opt li{margin-bottom:4px}
+  .opt.best{outline:2px solid var(--c)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;font-variant-numeric:tabular-nums}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:13px;color:var(--muted);font-weight:600}
+  .tablewrap{overflow-x:auto}
+  figure{margin:0}
+  figure img{width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--line);background:#fff}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:8px}
+  .chartbox{position:relative;height:300px}
+  .ctrl{display:flex;align-items:center;gap:12px;margin:12px 0 4px;flex-wrap:wrap}
+  .ctrl label{font-size:14px;font-weight:600}
+  .ctrl input[type=range]{flex:1;min-width:160px;accent-color:var(--c)}
+  .ctrl output{font-weight:700;font-variant-numeric:tabular-nums;min-width:48px}
+  .readout{font-size:14px;color:var(--muted)}
+  .readout b{color:var(--ink)}
+  .note{font-size:14px;color:var(--muted)}
+  .heat td{text-align:center;font-weight:600;font-size:13px;color:#fff;border:2px solid #fff;padding:7px 4px}
+  .heat th{text-align:center;border:none}
+  .legend{display:flex;gap:14px;font-size:13px;margin-top:10px;flex-wrap:wrap}
+  .legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--sw)}
+  .conclusion p{margin:0 0 12px}
+  footer{padding:32px 0 48px;color:var(--muted);font-size:13px}
+  @media (max-width:860px){.grid3,.grid2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>AstraSync AI/ML Contract Decision</h1>
+    <p>Which pricing offer should AstraSync accept? &nbsp;·&nbsp; Present value of contribution, 1.5% monthly discount rate, 18 months</p>
+  </div>
+</header>
+
+<nav>
+  <div class="wrap">
+    <a href="#summary">Summary</a>
+    <a href="#analysis">Analysis</a>
+    <a href="#illustration">Illustration</a>
+    <a href="#sensitivity">Sensitivity Analysis</a>
+    <a href="#conclusion">Conclusion</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- SUMMARY -->
+<section id="summary">
+  <h2><span class="num">1</span>Summary</h2>
+  <div class="card summary">
+    AstraSync proposed $160,000 a month for an 18-month AI/ML implementation (PV contribution $626,902), but the client rejected it and offered two cheaper options, with an open RFP as the fallback.
+    We valued each path as the present value of AstraSync's contribution after its $120,000 monthly cost, discounting at 1.5% per month.
+    We used a decision tree for the bonus and bid outcomes and a 10,000-run triangular simulation of client savings to value the RFP gain-share.
+    The RFP bid at $150,000/month has the highest expected value ($509,768), narrowly ahead of the bonus offer ($506,713) and the flat $152,000 offer ($501,522).
+    Because the gap is under $9,000 and the RFP carries a 60% chance of earning nothing, we recommend AstraSync bid on the RFP only if it is confident its win chance is at least 40%; otherwise it should accept option (b), the $125,000 plus bonus offer.
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">(a) Flat $152K/mo</div><div class="val">$501,522</div></div>
+    <div class="kpi"><div class="lab">(b) $125K/mo + bonus</div><div class="val">$506,713</div></div>
+    <div class="kpi win"><div class="lab">(c) RFP bid $150K/mo ★ best EV</div><div class="val">$509,768</div></div>
+    <div class="kpi"><div class="lab">Original $160K proposal</div><div class="val">$626,902</div></div>
+  </div>
+</section>
+
+<!-- ANALYSIS -->
+<section id="analysis">
+  <h2><span class="num">2</span>Analysis</h2>
+  <p class="lede">AstraSync's cost is 1,200 hours × $100 = $120,000 per month. The 18-month annuity factor at 1.5% is 15.6726 and the month-18 discount factor is 0.7649.</p>
+  <div class="grid3">
+    <div class="card opt">
+      <span class="tag" style="background:var(--a)">Option A</span>
+      <h3>Equal payments of $152,000/mo</h3>
+      <div class="ev" style="color:var(--a)">$501,522</div>
+      <ul>
+        <li>Contribution is $32,000 a month, guaranteed.</li>
+        <li>PV = $32,000 × 15.6726.</li>
+        <li><b>No risk:</b> the payoff does not depend on performance or competition.</li>
+        <li>Gives up $125,380 against the original proposal.</li>
+      </ul>
+    </div>
+    <div class="card opt">
+      <span class="tag" style="background:var(--b)">Option B</span>
+      <h3>$125,000/mo + $800,000 bonus</h3>
+      <div class="ev" style="color:var(--b)">$506,713</div>
+      <ul>
+        <li>Monthly contribution is only $5,000 (PV $78,363).</li>
+        <li>The $800,000 bonus is paid at month 18 if the implementation beats the client's benchmark (PV $611,929).</li>
+        <li>With bonus: $690,292 (p = 0.7). Without: $78,363 (p = 0.3).</li>
+        <li><b>Moderate risk:</b> 30% chance of a very thin margin.</li>
+      </ul>
+    </div>
+    <div class="card opt best">
+      <span class="tag" style="background:var(--c)">Option C ★</span>
+      <h3>RFP bid at $150,000/mo + gain-share</h3>
+      <div class="ev" style="color:var(--c)">$509,768</div>
+      <ul>
+        <li>Monthly contribution of $30,000 (PV $470,177) if AstraSync wins.</li>
+        <li>Expected gain-share of $1,051,420 at month 18 (PV $804,243), from simulated savings.</li>
+        <li>If won: $1,274,420. If lost (p = 0.6): $0.</li>
+        <li><b>High risk:</b> highest EV, but most likely outcome is nothing.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 8px;font-size:18px">How the RFP gain-share was valued</h3>
+    <p class="note" style="margin:0 0 12px">Client savings follow a triangular distribution (low $3.2M, most likely $5.6M, high $12.8M). The tiered share was applied to each of 10,000 simulated savings values and averaged; an exact integration gives the same result.</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Savings band</th><th>Share rule</th><th>Probability</th><th>Gain-share PV</th><th>Payoff if won</th></tr></thead>
+      <tbody>
+        <tr><td>&lt; $4M</td><td>0</td><td>0.028</td><td>$0</td><td>$470,177</td></tr>
+        <tr><td>$4M – $6M</td><td>20% above $4M</td><td>0.303</td><td>$178,129</td><td>$648,306</td></tr>
+        <tr><td>$6M – $8M</td><td>$400K + 40% above $6M</td><td>0.336</td><td>$594,345</td><td>$1,064,522</td></tr>
+        <tr><td>&gt; $8M</td><td>$1.2M + 60% above $8M</td><td>0.333</td><td>$1,652,209</td><td>$2,122,386</td></tr>
+        <tr><td><b>Expected</b></td><td></td><td>1.000</td><td><b>$804,243</b></td><td><b>$1,274,420</b></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ILLUSTRATION -->
+<section id="illustration">
+  <h2><span class="num">3</span>Illustration</h2>
+  <p class="lede">Decision tree with probabilities, payoffs and expected values. The highlighted branch is the highest-EV decision.</p>
+  <div class="card">
+    <figure>
+      <a href="images/decision_tree.png" target="_blank" rel="noopener"><img src="images/decision_tree.png" alt="Decision tree for AstraSync's three contract options with expected values: option a $501,522, option b $506,713, option c $509,768"></a>
+      <figcaption>Squares are decisions, circles are chance events, triangles are PV payoffs. Click to enlarge.</figcaption>
+    </figure>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card">
+      <figure>
+        <img src="images/gain_share_hist.png" alt="Histogram of simulated gain-share payments from 10,000 runs, right-skewed with most mass below $1M">
+        <figcaption>Simulated gain-share (10,000 runs). Vertical lines show the median and the mean ($1.05M). The long right tail is what lifts the RFP's value.</figcaption>
+      </figure>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 8px;font-size:18px">Risk profile of each option</h3>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th>Option</th><th>Worst</th><th>Best</th><th>EV</th></tr></thead>
+        <tbody>
+          <tr><td>(a) $152K/mo</td><td>$501,522</td><td>$501,522</td><td>$501,522</td></tr>
+          <tr><td>(b) $125K + bonus</td><td>$78,363</td><td>$690,292</td><td>$506,713</td></tr>
+          <tr><td>(c) RFP</td><td>$0</td><td>$2.12M+</td><td><b>$509,768</b></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="note" style="margin:12px 0 0">The expected values sit within about $8,000 of each other, but the spread of outcomes differs sharply. That is why the decision depends on how certain the probability inputs are.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SENSITIVITY -->
+<section id="sensitivity">
+  <h2><span class="num">4</span>Sensitivity Analysis</h2>
+  <p class="lede">The two most important inputs are the two subjective probabilities: AstraSync's chance of winning the RFP and its chance of earning the bonus. Both are estimates, and small changes in either one flip the recommendation.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin:0;font-size:18px">Input 1: Probability of winning the RFP</h3>
+      <p class="note" style="margin:4px 0 0">Base case 0.40. Break-even with (b) at <b>0.398</b> and with (a) at <b>0.394</b>.</p>
+      <div class="ctrl"><label for="pwin">P(win)</label><input id="pwin" type="range" min="0" max="1" step="0.01" value="0.40"><output id="pwinOut">0.40</output></div>
+      <div class="chartbox"><canvas id="chartWin"></canvas></div>
+      <p class="readout" id="winRead"></p>
+    </div>
+    <div class="card">
+      <h3 style="margin:0;font-size:18px">Input 2: Probability of earning the bonus</h3>
+      <p class="note" style="margin:4px 0 0">Base case 0.70. Break-even with (c) at <b>0.705</b> and with (a) at <b>0.692</b>.</p>
+      <div class="ctrl"><label for="pbon">P(bonus)</label><input id="pbon" type="range" min="0" max="1" step="0.01" value="0.70"><output id="pbonOut">0.70</output></div>
+      <div class="chartbox"><canvas id="chartBonus"></canvas></div>
+      <p class="readout" id="bonRead"></p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 4px;font-size:18px">Both inputs together: which option has the highest EV?</h3>
+    <p class="note" style="margin:0 0 12px">Rows are P(win RFP), columns are P(bonus). The outlined cell is the base case.</p>
+    <div class="tablewrap"><table class="heat" id="heat"></table></div>
+    <div class="legend">
+      <span style="--sw:var(--a)">(a) $152K/mo</span>
+      <span style="--sw:var(--b)">(b) $125K + bonus</span>
+      <span style="--sw:var(--c)">(c) RFP</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 8px;font-size:18px">What the sensitivity shows</h3>
+    <ul style="margin:0;padding-left:18px">
+      <li>The RFP's EV moves $12,744 for every 1-point change in win probability. Dropping from 40% to 39% makes (b) the better choice.</li>
+      <li>The bonus option's EV moves $6,119 for every 1-point change in bonus probability. Raising it from 70% to 71% makes (b) beat the RFP.</li>
+      <li>Option (a) is never far behind. It is the best choice only when both probabilities fall a little below their base values.</li>
+      <li>The base case sits almost exactly on the boundary between (b) and (c), so the recommendation is fragile.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CONCLUSION -->
+<section id="conclusion">
+  <h2><span class="num">5</span>Conclusion</h2>
+  <div class="card conclusion">
+    <p>On expected value alone, AstraSync should decline both client offers and bid $150,000 a month in the RFP (EV $509,768). It edges out the $125,000-plus-bonus offer ($506,713) and the flat $152,000 offer ($501,522). None of the options comes close to the original $160,000 proposal ($626,902), so AstraSync is giving up roughly $117,000 to $125,000 in value whichever path it takes.</p>
+    <p>The margin is very thin, though. The RFP pays nothing 60% of the time, and the recommendation reverses if the win probability is even one point lower than 40%, or the bonus probability one point higher than 70%. Those probabilities are judgment calls, not measured data.</p>
+    <p><b>Recommendation:</b> AstraSync's long track record makes it confident in delivery, which favors option (b): the bonus rewards exactly what AstraSync controls, while the RFP depends on competitors it cannot control. Unless the director has strong evidence that AstraSync's chance of winning the RFP is above 40%, the risk-adjusted choice is to <b>accept option (b)</b> and push the client for a slightly higher monthly base payment. A risk-neutral firm with confidence in its bid could reasonably choose the RFP.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">AstraSync case analysis · Payoffs are present values of contribution at 1.5% per month · Gain-share simulated in R (10,000 runs, triangular savings).</div>
+</footer>
+
+<script>
+(function(){
+  var AF = 15.672560892, DF = 0.764911587;
+  var A  = 32000*AF;                 // 501,522
+  var B0 = 5000*AF;                  // 78,363
+  var BB = B0 + 800000*DF;           // 690,292
+  var W  = 30000*AF + 1051419.753*DF;// 1,274,420
+  var colA = '#4c78a8', colB = '#d9962b', colC = '#c0392b';
+
+  function evB(q){ return q*BB + (1-q)*B0; }
+  function evC(p){ return p*W; }
+  function money(x){ return '$' + Math.round(x).toLocaleString('en-US'); }
+  function best(p,q){
+    var v = {a:A, b:evB(q), c:evC(p)};
+    return Object.keys(v).reduce(function(m,k){ return v[k]>v[m]?k:m; }, 'a');
+  }
+  var names = {a:'(a) $152K/mo', b:'(b) $125K + bonus', c:'(c) RFP'};
+
+  var xs = []; for (var i=0;i<=100;i+=2) xs.push(i/100);
+  var fmtK = function(v){ return '$' + (v/1000).toFixed(0) + 'K'; };
+
+  function baseOpts(xlab){
+    return {
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{position:'bottom', labels:{boxWidth:12, usePointStyle:true}},
+        tooltip:{callbacks:{title:function(c){return xlab+' = '+c[0].parsed.x.toFixed(2);},
+                            label:function(c){return c.dataset.label+': '+money(c.parsed.y);}}}},
+      scales:{x:{type:'linear', min:0, max:1, title:{display:true,text:xlab}, ticks:{stepSize:0.1}},
+              y:{min:300000, max:700000, ticks:{callback:fmtK}, title:{display:true,text:'Expected PV contribution'}}}
+    };
+  }
+  function line(label, fn, col, dash){
+    return {label:label, data:xs.map(function(x){return {x:x,y:fn(x)};}), borderColor:col, backgroundColor:col,
+            borderWidth:2.5, pointRadius:0, borderDash:dash||[]};
+  }
+  function marker(x, y, col){
+    return {label:'_m', data:[{x:x,y:y}], borderColor:col, backgroundColor:col, pointRadius:6, showLine:false};
+  }
+
+  var chartWin = new Chart(document.getElementById('chartWin'), {
+    type:'line',
+    data:{datasets:[
+      line('(a) $152K/mo', function(){return A;}, colA),
+      line('(b) $125K + bonus', function(){return evB(0.7);}, colB),
+      line('(c) RFP', evC, colC),
+      marker(0.4, evC(0.4), colC)
+    ]},
+    options:baseOpts('P(win RFP)')
+  });
+  chartWin.options.plugins.legend.labels.filter = function(i){ return i.text!=='_m'; };
+
+  var chartBonus = new Chart(document.getElementById('chartBonus'), {
+    type:'line',
+    data:{datasets:[
+      line('(a) $152K/mo', function(){return A;}, colA),
+      line('(b) $125K + bonus', evB, colB),
+      line('(c) RFP', function(){return evC(0.4);}, colC),
+      marker(0.7, evB(0.7), colB)
+    ]},
+    options:baseOpts('P(bonus)')
+  });
+  chartBonus.options.plugins.legend.labels.filter = function(i){ return i.text!=='_m'; };
+
+  var pwin = document.getElementById('pwin'), pbon = document.getElementById('pbon');
+
+  function update(){
+    var p = +pwin.value, q = +pbon.value;
+    document.getElementById('pwinOut').textContent = p.toFixed(2);
+    document.getElementById('pbonOut').textContent = q.toFixed(2);
+
+    // Chart 1: vary p, hold q at slider value
+    chartWin.data.datasets[1].data = xs.map(function(x){return {x:x,y:evB(q)};});
+    chartWin.data.datasets[3].data = [{x:p,y:evC(p)}];
+    chartWin.update();
+    // Chart 2: vary q, hold p at slider value
+    chartBonus.data.datasets[2].data = xs.map(function(x){return {x:x,y:evC(p)};});
+    chartBonus.data.datasets[3].data = [{x:q,y:evB(q)}];
+    chartBonus.update();
+
+    var b = best(p,q);
+    var txt = 'At P(win) = <b>'+p.toFixed(2)+'</b> and P(bonus) = <b>'+q.toFixed(2)+'</b>: (a) '+money(A)+
+              ', (b) '+money(evB(q))+', (c) '+money(evC(p))+'. Best: <b>'+names[b]+'</b>.';
+    document.getElementById('winRead').innerHTML = txt;
+    document.getElementById('bonRead').innerHTML = txt;
+  }
+  pwin.addEventListener('input', update);
+  pbon.addEventListener('input', update);
+  update();
+
+  // Two-way table
+  var ps = [0.30,0.35,0.38,0.40,0.42,0.45,0.50], qs = [0.55,0.60,0.65,0.68,0.70,0.72,0.75,0.80];
+  var cols = {a:colA,b:colB,c:colC}, lab = {a:'A',b:'B',c:'C'};
+  var h = '<thead><tr><th>P(win) \\ P(bonus)</th>' + qs.map(function(q){return '<th>'+q.toFixed(2)+'</th>';}).join('') + '</tr></thead><tbody>';
+  ps.forEach(function(p){
+    h += '<tr><th>'+p.toFixed(2)+'</th>';
+    qs.forEach(function(q){
+      var k = best(p,q), base = (p===0.40 && q===0.70);
+      h += '<td style="background:'+cols[k]+(base?';outline:3px solid #1d2330;outline-offset:-3px':'')+'">'+lab[k]+'</td>';
+    });
+    h += '</tr>';
+  });
+  document.getElementById('heat').innerHTML = h + '</tbody>';
+})();
+</script>
+</body>
+</html>
